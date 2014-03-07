@@ -38,7 +38,7 @@ before you can stream tweets. Instructions for this follow.
 ### Provide Twitter API Keys
 
 Once you have added `twitter_stream` to your list of installed apps,
-the Django Admin page should include a section for the `API_Key` model.
+the Django Admin page should include a section for the `ApiKey` model.
 You can use this to input your Twitter API keys.
 
 If you do not have Twitter API keys, you must sign in to the
@@ -50,7 +50,7 @@ scroll to the bottom, and click the button to generate access keys for your acco
 This can take a few minutes to complete.
 
 Once you have an application and access keys for your account,
-you can copy the necessary values into a new API_Keys entry.
+you can copy the necessary values into a new ApiKey entry.
 This includes the "API key" and "API secret", located at the
 top of your application keys page, and
 the "Access Token" and "Access Token Secret", located at

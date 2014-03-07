@@ -16,7 +16,7 @@ def parse_datetime(string):
         return datetime(*(parsedate(string)[:6]))
 
 
-class API_Key(models.Model):
+class ApiKey(models.Model):
     """
     Keys for accessing the Twitter Streaming API.
     """
@@ -38,9 +38,9 @@ class API_Key(models.Model):
     @classmethod
     def get_keys(cls, keys_name):
         if keys_name:
-            keys = API_Key.objects.get(name=keys_name)
+            keys = ApiKey.objects.get(name=keys_name)
         else:
-            keys = API_Key.objects.first()
+            keys = ApiKey.objects.first()
 
         if not keys:
             raise ObjectDoesNotExist("Unknown keys %s" % keys_name)
@@ -57,7 +57,7 @@ class StreamProcess(models.Model):
     expires_at = models.DateTimeField()
     last_heartbeat = models.DateTimeField()
 
-    keys = models.ForeignKey(API_Key, null=True)
+    keys = models.ForeignKey(ApiKey, null=True)
     hostname = models.CharField(max_length=250)
     process_id = models.PositiveIntegerField()
 

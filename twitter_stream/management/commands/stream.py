@@ -89,7 +89,7 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, stop)
 
         try:
-            keys = models.API_Key.get_keys(keys_name)
+            keys = models.ApiKey.get_keys(keys_name)
 
             logger.info("Using keys for %s", keys.name)
             stream_process.keys = keys
