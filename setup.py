@@ -29,7 +29,7 @@ setup(
     ],
     install_requires=[
         "django",
-        "tweepy (>=2.2)",
-        "twitter-monitor (==0.1.0)"
+        "tweepy >=2.2",
+        "twitter-monitor == 0.1.0"
     ]
 )
