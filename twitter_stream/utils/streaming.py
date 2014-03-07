@@ -125,7 +125,7 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
         super(QueueStreamListener, self).__init__(api)
 
         # A place to put the tweets
-        self.queue = tweet_queue.TweetQueue()
+        self.queue = TweetQueue()
 
         # For calculating tweets / sec
         self.time = time.time()
