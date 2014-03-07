@@ -27,7 +27,7 @@ setup(
     dependency_links=[
         'https://github.com/michaelbrooks/twitter-monitor/archive/v0.1.0.zip#egg=twitter-monitor-0.1.0'
     ],
-    requires=[
+    install_requires=[
         "django",
         "tweepy (>=2.2)",
         "twitter-monitor (==0.1.0)"
