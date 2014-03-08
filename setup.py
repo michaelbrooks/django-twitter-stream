@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name='django-twitter-stream',
-    version='0.1.0',
+    version='0.1.1',
     packages=['twitter_stream'],
     url='http://github.com/michaelbrooks/django-twitter-stream',
     license='MIT',
@@ -24,12 +24,8 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
     ],
-    dependency_links=[
-        'https://github.com/michaelbrooks/twitter-monitor/archive/v0.1.0.zip#egg=twitter-monitor-0.1.0'
-    ],
     install_requires=[
         "django",
-        "tweepy >=2.2",
-        "twitter-monitor == 0.1.0"
+        "twitter-monitor == 0.1.1"
     ]
 )

@@ -107,7 +107,7 @@ class Command(BaseCommand):
 
             while checker.ok():
                 try:
-                    stream.start(poll_interval)
+                    stream.start_polling(poll_interval)
                 except Exception as e:
                     checker.error(e)
                     time.sleep(1)  # to avoid craziness
