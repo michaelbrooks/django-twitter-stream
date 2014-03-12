@@ -12,3 +12,6 @@ POLL_INTERVAL = getattr(_stream_settings, 'POLL_INTERVAL', 10)
 
 # The default keys to use for streaming
 DEFAULT_KEYS_NAME = getattr(_stream_settings, 'DEFAULT_KEYS_NAME', None)
+
+# Put the stream in a loop to prevent random termination
+PREVENT_EXIT = getattr(_stream_settings, 'PREVENT_EXIT', False)

@@ -181,7 +181,9 @@ class Tweet(models.Model):
         """
 
         user = raw['user']
-        retweeted_status = raw.get('retweeted_status', {'id': None})
+        retweeted_status = raw.get('retweeted_status')
+        if retweeted_status is None:
+            retweeted_status = {'id': None}
 
         # The "coordinates" entry looks like this:
         #
@@ -198,6 +200,17 @@ class Tweet(models.Model):
         coordinates = (None, None)
         if raw['coordinates']:
             coordinates = raw['coordinates']['coordinates']
+
+        # Replace negative counts with None to indicate missing data
+        counts = {
+            'favorite_count': raw.get('favorite_count'),
+            'retweet_count': raw.get('retweet_count'),
+            'user_followers_count': user.get('followers_count'),
+            'user_friends_count': user.get('friends_count'),
+        }
+        for key in counts:
+            if counts[key] is not None and counts[key] < 0:
+                counts[key] = None
 
         return cls(
             # Basic tweet info
@@ -227,10 +240,10 @@ class Tweet(models.Model):
             user_location=user.get('location'),
 
             # Engagement - not likely to be very useful for streamed tweets but whatever
-            favorite_count=raw.get('favorite_count'),
-            retweet_count=raw.get('retweet_count'),
-            user_followers_count=user.get('followers_count'),
-            user_friends_count=user.get('friends_count'),
+            favorite_count=counts.get('favorite_count'),
+            retweet_count=counts.get('retweet_count'),
+            user_followers_count=counts.get('user_followers_count'),
+            user_friends_count=counts.get('user_friends_count'),
 
             # Relation to other tweets
             in_reply_to_status_id=raw.get('in_reply_to_status_id'),

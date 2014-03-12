@@ -50,6 +50,13 @@ class Command(BaseCommand):
             default=settings.POLL_INTERVAL,
             help='Seconds between term updates and tweet inserts.'
         ),
+        make_option(
+            '--prevent-exit',
+            action='store_true',
+            dest='prevent_exit',
+            default=False,
+            help='Put the stream in a loop to prevent random termination. Use this if you are not running inside a process management system like supervisord.'
+        ),
     )
     args = '<keys_name>'
     help = "Starts a streaming connection to Twitter"
@@ -58,6 +65,7 @@ class Command(BaseCommand):
 
         # The suggested time between hearbeats
         poll_interval = options.get('poll_interval', settings.POLL_INTERVAL)
+        prevent_exit = options.get('prevent_exit', settings.PREVENT_EXIT)
 
         # First expire any old stream process records that have failed
         # to report in for a while
@@ -69,6 +77,10 @@ class Command(BaseCommand):
             timeout_seconds=timeout_seconds
         )
 
+        listener = utils.QueueStreamListener()
+        checker = utils.FeelsTermChecker(queue_listener=listener,
+                                         stream_process=stream_process)
+
         def stop(signum, frame):
             """
             Register stream's death and exit.
@@ -78,6 +90,9 @@ class Command(BaseCommand):
             if stream_process:
                 stream_process.status = models.StreamProcess.STREAM_STATUS_STOPPED
                 stream_process.heartbeat()
+
+            # Let the tweet listener know it should be quitting asap
+            listener.set_terminate()
 
             raise SystemExit()
 
@@ -108,26 +123,25 @@ class Command(BaseCommand):
             auth = tweepy.OAuthHandler(keys.api_key, keys.api_secret)
             auth.set_access_token(keys.access_token, keys.access_token_secret)
 
-            listener = utils.QueueStreamListener()
-            checker = utils.FeelsTermChecker(queue_listener=listener,
-                                             stream_process=stream_process)
-
             # Start and maintain the streaming connection...
             stream = twitter_monitor.DynamicTwitterStream(auth, listener, checker)
 
-            while checker.ok():
-                try:
-                    stream.start_polling(poll_interval)
-                except Exception as e:
-                    checker.error(e)
-                    time.sleep(1)  # to avoid craziness
+            if prevent_exit:
+                while checker.ok():
+                    try:
+                        stream.start_polling(poll_interval)
+                    except Exception as e:
+                        checker.error(e)
+                        time.sleep(1)  # to avoid craziness
+            else:
+                stream.start_polling(poll_interval)
 
             logger.error("Stopping because of excess errors")
             stream_process.status = models.StreamProcess.STREAM_STATUS_STOPPED
             stream_process.heartbeat()
 
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
 
         finally:
             stop(None, None)

@@ -27,5 +27,9 @@ setup(
     install_requires=[
         "django",
         "twitter-monitor == 0.1.1"
+    ],
+    test_suite="setuptest.setuptest.SetupTestSuite",
+    tests_require=[
+        'django-setuptest',
     ]
 )

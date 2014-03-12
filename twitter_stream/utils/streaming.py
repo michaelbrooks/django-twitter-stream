@@ -124,6 +124,8 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
     def __init__(self, api=None):
         super(QueueStreamListener, self).__init__(api)
 
+        self.terminate = False
+
         # A place to put the tweets
         self.queue = TweetQueue()
 
@@ -133,6 +135,9 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
     def on_status(self, status):
         # construct a Tweet object from the raw status object.
         self.queue.put_nowait(status)
+
+        # If terminate gets set, this should take out the tweepy stream thread
+        return not self.terminate
 
     def process_tweet_queue(self):
         """
@@ -166,3 +171,6 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
         logger.info("Inserted %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
         return len(tweets) / diff
+
+    def set_terminate(self):
+        self.terminate = True

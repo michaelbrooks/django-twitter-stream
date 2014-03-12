@@ -126,6 +126,9 @@ TWITTER_STREAM_SETTINGS = {
 
     # The name of the default keys to use for streaming. If not set, we'll just grab one.
     'DEFAULT_KEYS_NAME': None,
+
+    # Put the stream in a loop so random termination will be prevented.
+    'PREVENT_EXIT': False,
 }
 ```
 
