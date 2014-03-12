@@ -3,6 +3,7 @@ from optparse import make_option
 from logging.config import dictConfig
 import time
 import signal
+from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.management.base import BaseCommand
 import tweepy
@@ -68,9 +69,6 @@ class Command(BaseCommand):
             timeout_seconds=timeout_seconds
         )
 
-        # Expire old stream processes that may be lying around
-        models.StreamProcess.expire_timed_out()
-
         def stop(signum, frame):
             """
             Register stream's death and exit.
@@ -88,10 +86,22 @@ class Command(BaseCommand):
         signal.signal(signal.SIGINT, stop)
         signal.signal(signal.SIGTERM, stop)
 
-        try:
-            keys = models.ApiKey.get_keys(keys_name)
+        keys = None
+        while not keys:
+            try:
+                keys = models.ApiKey.get_keys(keys_name)
+            except ObjectDoesNotExist:
+                if keys_name:
+                    logger.error("Keys for '%s' do not exist in the database. Waiting...", keys_name)
+                else:
+                    logger.warn("No keys in the database. Waiting...")
 
-            logger.info("Using keys for %s", keys.name)
+            time.sleep(5)
+            stream_process.heartbeat()
+
+        logger.info("Using keys for %s", keys.name)
+
+        try:
             stream_process.keys = keys
             stream_process.save()
 
