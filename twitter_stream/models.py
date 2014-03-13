@@ -148,7 +148,7 @@ class Tweet(models.Model):
     user_verified = models.BooleanField()
 
     # Timing parameters
-    created_at = models.DateTimeField()  # should be UTC
+    created_at = models.DateTimeField(db_index=True)  # should be UTC
     user_utc_offset = models.IntegerField(null=True, blank=True, default=None)
     user_time_zone = models.CharField(max_length=150, null=True, blank=True, default=None)
 
@@ -172,7 +172,7 @@ class Tweet(models.Model):
     retweeted_status_id = models.BigIntegerField(null=True, blank=True, default=None)
 
     # Track the number of analyses that have already considered this tweet
-    analyzed_by = models.SmallIntegerField(default=0)
+    analyzed_by = models.SmallIntegerField(default=0, db_index=True)
 
     @classmethod
     def create_from_json(cls, raw):

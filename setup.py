@@ -26,7 +26,8 @@ setup(
     ],
     install_requires=[
         "django",
-        "twitter-monitor == 0.1.1"
+        "twitter-monitor == 0.1.1",
+        "South == 0.8.4"
     ],
     test_suite="setuptest.setuptest.SetupTestSuite",
     tests_require=[

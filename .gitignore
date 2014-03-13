@@ -43,3 +43,4 @@ pep8.txt
 
 /venv
 /.idea
+/*.db
