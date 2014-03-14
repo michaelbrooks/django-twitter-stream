@@ -18,7 +18,7 @@ Installation
 Install with pip:
 
 ```bash
-pip -e git+https://github.com/michaelbrooks/django-twitter-stream.git#egg=django-twitter-stream
+pip install -e git+https://github.com/michaelbrooks/django-twitter-stream.git#egg=django-twitter-stream
 ```
 
 Add to `INSTALLED_APPS` in your Django settings file:
