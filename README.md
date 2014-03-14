@@ -31,6 +31,9 @@ INSTALLED_APPS = (
 ```
 
 Run `python manage.py syncdb` to update your database.
+This project also supports migrations with [South](http://south.aeracode.org/).
+If you are using South in your project, you should run `python manage.py migrate`.
+
 You need to supply your Twitter API keys and set up some filter terms
 before you can stream tweets. Instructions for this follow.
 
