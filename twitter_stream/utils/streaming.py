@@ -8,7 +8,7 @@ from twitter_stream import settings, models
 
 __all__ = ['FeelsTermChecker', 'QueueStreamListener']
 
-logger = logging.getLogger('streamer')
+logger = logging.getLogger(__name__)
 
 
 class TweetQueue(Queue.Queue):
@@ -38,9 +38,9 @@ class TweetQueue(Queue.Queue):
             elif timeout < 0:
                 raise ValueError("'timeout' must be a non-negative number")
             else:
-                endtime = time() + timeout
+                endtime = time.time() + timeout
                 while not self._qsize():
-                    remaining = endtime - time()
+                    remaining = endtime - time.time()
                     if remaining <= 0.0:
                         raise Queue.Empty
                     self.not_empty.wait(remaining)

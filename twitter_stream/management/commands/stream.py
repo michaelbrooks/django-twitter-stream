@@ -14,7 +14,7 @@ from twitter_stream import settings
 
 
 # Setup logging if not already configured
-logger = logging.getLogger('twitter_stream')
+logger = logging.getLogger(__name__)
 if not logger.handlers:
     dictConfig({
         "version": 1,
