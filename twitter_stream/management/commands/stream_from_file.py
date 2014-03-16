@@ -9,6 +9,7 @@ import signal
 
 from twitter_stream import models
 from twitter_stream import utils
+from twitter_stream import settings
 
 # Setup logging if not already configured
 logger = logging.getLogger('twitter_stream')
@@ -76,6 +77,7 @@ class Command(BaseCommand):
         poll_interval = options.get('poll_interval', 10)
         rate_limit = options.get('rate_limit', 50)
         limit = options.get('limit', None)
+        prevent_exit = options.get('prevent_exit', settings.PREVENT_EXIT)
 
         # First expire any old stream process records that have failed
         # to report in for a while
@@ -86,6 +88,11 @@ class Command(BaseCommand):
             timeout_seconds=3 * poll_interval
         )
 
+        listener = utils.QueueStreamListener()
+        checker = utils.FeelsTermChecker(queue_listener=listener,
+                                         stream_process=stream_process)
+
+
         def stop(signum, frame):
             """
             Register stream's death and exit.
@@ -95,6 +102,9 @@ class Command(BaseCommand):
             if stream_process:
                 stream_process.status = models.StreamProcess.STREAM_STATUS_STOPPED
                 stream_process.heartbeat()
+
+            # Let the tweet listener know it should be quitting asap
+            listener.set_terminate()
 
             raise SystemExit()
 
@@ -109,28 +119,26 @@ class Command(BaseCommand):
             if rate_limit:
                 logger.info("Rate limit: %f", rate_limit)
 
-            listener = utils.QueueStreamListener()
-            checker = utils.FeelsTermChecker(queue_listener=listener,
-                                                 stream_process=stream_process)
+            stream = utils.FakeTwitterStream(tweets_file,
+                                             limit=limit, rate_limit=rate_limit,
+                                             listener=listener, term_checker=checker)
 
-            while checker.ok():
-                try:
-                    # Start and maintain the streaming connection...
-                    stream = utils.FakeTwitterStream(tweets_file,
-                                               limit=limit, rate_limit=rate_limit,
-                                               listener=listener, term_checker=checker)
-
-                    stream.start(poll_interval)
-                except Exception as e:
-                    checker.error(e)
-                    time.sleep(1)  # to avoid craziness
+            if prevent_exit:
+                while checker.ok():
+                    try:
+                        stream.start(poll_interval)
+                    except Exception as e:
+                        checker.error(e)
+                        time.sleep(1)  # to avoid craziness
+            else:
+                stream.start(poll_interval)
 
             logger.error("Stopping because of excess errors")
             stream_process.status = models.StreamProcess.STREAM_STATUS_STOPPED
             stream_process.heartbeat()
 
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
 
         finally:
             stop(None, None)
