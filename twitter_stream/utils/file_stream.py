@@ -16,7 +16,9 @@ import json
 import logging
 import threading
 
-logger = logging.getLogger('twitter_stream')
+import twitter_monitor
+
+logger = logging.getLogger(__name__)
 
 class ObjDict(dict):
 
@@ -29,9 +31,37 @@ class ObjDict(dict):
     def __delattr__(self, item):
         del self[item]
 
+class FakeTermChecker(twitter_monitor.TermChecker):
+
+    def __init__(self, queue_listener, stream_process):
+        super(FakeTermChecker, self).__init__()
+
+        # A queue for tweets that need to be written to the database
+        self.listener = queue_listener
+        self.error_count = 0
+        self.process = stream_process
+
+    def check(self):
+        """We always return true!"""
+
+        # Process the tweet queue -- this is more important
+        # to do regularly than updating the tracking terms
+        # Update the process status in the database
+        self.process.tweet_rate = self.listener.process_tweet_queue()
+        self.process.error_count = self.error_count
+        self.process.heartbeat()
+
+        return True
+
+    def ok(self):
+        return self.error_count < 5
+
+    def error(self, exc):
+        logger.error(exc)
+        self.error_count += 1
 
 # the chunk size for reading in the file
-PARSE_SIZE = 8 * 1024 * 1024
+BYTES_BETWEEN_PROGRESS = 40 * 1024 * 1024
 
 
 class TweetProcessor(object):
@@ -144,7 +174,11 @@ class TweetProcessor(object):
                                 time.sleep(time_between_tweets)
 
                         start = time.time()
-                        self.process(tweet, raw)
+
+                        if self.process(tweet, raw) is False:
+                            logger.warn("Stopping file stream")
+                            break
+
                         self.tweet_process_time += time.time() - start
                         tweet_count += 1
 
@@ -157,7 +191,7 @@ class TweetProcessor(object):
                     raw += line
 
                 cur_pos = infile.tell()
-                if (cur_pos - last_parse_position) > PARSE_SIZE:
+                if (cur_pos - last_parse_position) > BYTES_BETWEEN_PROGRESS:
                     last_parse_position = cur_pos
                     pct_done = (float(cur_pos) * 100.0 / float(filesize))
                     logger.info("====================")
@@ -171,7 +205,6 @@ class TweetProcessor(object):
             self._print_progress()
 
         logger.info("Done processing %s..."%(self.args.tweetsfile))
-
 
 
 class FakeTwitterStream(TweetProcessor):
@@ -195,10 +228,10 @@ class FakeTwitterStream(TweetProcessor):
         self.polling_interrupt = threading.Event()
 
     def process(self, tweet, raw_tweet):
-        self.listener.on_status(tweet)
         self.last_created_at = tweet['created_at']
+        return self.listener.on_status(tweet)
 
-    def start(self, interval):
+    def start_polling(self, interval):
         """
         Start polling for term updates and streaming.
         """
@@ -210,32 +243,44 @@ class FakeTwitterStream(TweetProcessor):
 
         logger.info("Starting polling for changes to the track list")
         while self.polling:
+            loop_start = time.time()
+
+            self.update_stream()
+            self.handle_exceptions()
+
             if self.last_created_at:
                 logger.info('Inserted tweets up to %s', str(self.last_created_at))
 
-            # Check if the tracking list has changed
-            if self.term_checker.check():
-                # There were changes to the term list -- restart the stream
-                self.tracking_terms = self.term_checker.tracking_terms()
-                self.update_stream()
+            # wait for the interval (compensate for the time taken in the loop
+            elapsed = (time.time() - loop_start)
+            self.polling_interrupt.wait(max(0.1, interval - elapsed))
 
-            # check to see if an exception was raised in the streaming thread
-            if self.listener.streaming_exception is not None:
-                # propagate outward
-                raise self.listener.streaming_exception
-
-            # wait for the interval unless interrupted
-            try:
-                self.polling_interrupt.wait(interval)
-            except KeyboardInterrupt as e:
-                logger.info("Polling canceled by user")
-                raise e
-
-        logger.info("Term poll ceased!")
+        logger.warn("Term poll ceased!")
 
     def update_stream(self):
+        """
+        Restarts the stream with the current list of tracking terms.
+        """
+
+        # Check if the tracking list has changed
+        if not self.term_checker.check():
+            return
+
+        # Start a new stream
+        self.start_stream()
+
+    def start_stream(self):
+        """
+        Starts a stream if not already started.
+        """
+
         if not self.stream:
             self.stream = threading.Thread(target=self.run)
             self.stream.start()
-        else:
-            logger.warn("Cannot restart fake twitter streams!")
+
+    def handle_exceptions(self):
+        # check to see if an exception was raised in the streaming thread
+        if self.listener.streaming_exception is not None:
+            logger.warn("Streaming exception: %s", self.listener.streaming_exception)
+            # propagate outward
+            raise self.listener.streaming_exception
