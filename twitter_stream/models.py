@@ -174,6 +174,10 @@ class Tweet(models.Model):
     # Track the number of analyses that have already considered this tweet
     analyzed_by = models.SmallIntegerField(default=0, db_index=True)
 
+    @property
+    def is_retweet(self):
+        return self.retweeted_status_id is not None
+
     @classmethod
     def create_from_json(cls, raw):
         """
