@@ -64,7 +64,7 @@ class Command(BaseCommand):
     def handle(self, keys_name=settings.DEFAULT_KEYS_NAME, *args, **options):
 
         # The suggested time between hearbeats
-        poll_interval = options.get('poll_interval', settings.POLL_INTERVAL)
+        poll_interval = float(options.get('poll_interval', settings.POLL_INTERVAL))
         prevent_exit = options.get('prevent_exit', settings.PREVENT_EXIT)
 
         # First expire any old stream process records that have failed

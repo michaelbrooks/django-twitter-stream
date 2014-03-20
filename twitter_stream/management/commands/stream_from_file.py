@@ -74,7 +74,7 @@ class Command(BaseCommand):
     def handle(self, tweets_file=None, *args, **options):
 
         # The suggested time between hearbeats
-        poll_interval = options.get('poll_interval', 10)
+        poll_interval = float(options.get('poll_interval', settings.POLL_INTERVAL))
         rate_limit = options.get('rate_limit', 50)
         limit = options.get('limit', None)
         prevent_exit = options.get('prevent_exit', settings.PREVENT_EXIT)
