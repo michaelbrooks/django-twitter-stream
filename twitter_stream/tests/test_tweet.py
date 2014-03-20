@@ -3,8 +3,8 @@ from datetime import datetime
 
 from django.test import TestCase
 from django.utils import timezone
-import settings
-from models import Tweet
+from twitter_stream import settings
+from twitter_stream.models import Tweet
 
 
 class TweetCreateFromJsonTest(TestCase):

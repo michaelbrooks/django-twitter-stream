@@ -60,6 +60,7 @@ class StreamProcess(models.Model):
     keys = models.ForeignKey(ApiKey, null=True)
     hostname = models.CharField(max_length=250)
     process_id = models.PositiveIntegerField()
+    memory_usage = models.CharField(max_length=30, default=None, null=True, blank=True)
 
     STREAM_STATUS_RUNNING = "RUNNING"
     STREAM_STATUS_WAITING = "WAITING"  # No terms currently being tracked
@@ -80,11 +81,23 @@ class StreamProcess(models.Model):
         """Get the age of the streaming process"""
         return self.last_heartbeat - self.created_at
 
+    def get_memory_usage(self):
+        try:
+            import resource
+        except ImportError:
+            return "Unknown"
+
+        kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return "%.1f MB" % (0.0009765625 * kb)
 
     def heartbeat(self, save=True):
         self.status = StreamProcess.STREAM_STATUS_RUNNING
         self.last_heartbeat = timezone.now()
         self.expires_at = self.last_heartbeat + timedelta(seconds=self.timeout_seconds)
+
+        if settings.MONITOR_PERFORMANCE:
+            self.memory_usage = self.get_memory_usage()
+
         if save:
             self.save()
 

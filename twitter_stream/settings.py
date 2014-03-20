@@ -16,3 +16,6 @@ DEFAULT_KEYS_NAME = _stream_settings.get('DEFAULT_KEYS_NAME', None)
 
 # Put the stream in a loop to prevent random termination
 PREVENT_EXIT = _stream_settings.get('PREVENT_EXIT', False)
+
+# Record stats like memory usage in the database
+MONITOR_PERFORMANCE = _stream_settings.get('MONITOR_PERFORMANCE', True)
