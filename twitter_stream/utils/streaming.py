@@ -169,6 +169,12 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
         models.Tweet.objects.bulk_create(tweets)
 
+        if settings.DEBUG:
+            # Prevent apparent memory leaks
+            # https://docs.djangoproject.com/en/dev/faq/models/#why-is-django-leaking-memory
+            from django import db
+            db.reset_queries()
+
         logger.info("Inserted %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
         return len(tweets) / diff
 

@@ -1,5 +1,6 @@
 from django.conf import settings
 
+DEBUG = getattr(settings, 'DEBUG', False)
 USE_TZ = getattr(settings, 'USE_TZ', True)
 
 _stream_settings = getattr(settings, 'TWITTER_STREAM_SETTINGS', {})
