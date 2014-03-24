@@ -184,9 +184,6 @@ class Tweet(models.Model):
     in_reply_to_status_id = models.BigIntegerField(null=True, blank=True, default=None)
     retweeted_status_id = models.BigIntegerField(null=True, blank=True, default=None)
 
-    # Track the number of analyses that have already considered this tweet
-    analyzed_by = models.SmallIntegerField(default=0, db_index=True)
-
     @property
     def is_retweet(self):
         return self.retweeted_status_id is not None
