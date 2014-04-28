@@ -173,16 +173,17 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
         tweets = []
         for status in batch:
-            if settings.CAPTURE_EMBEDDED:
-                if 'retweeted_status' in status:
-                    if self.to_file:
-                        tweets.append(json.dumps(status['retweeted_status']))
-                        del status['retweeted_status']
-                    else:
-                        tweets.append(models.Tweet.create_from_json(status['retweeted_status']))
+            if settings.CAPTURE_EMBEDDED and 'retweeted_status' in status:
+                if self.to_file:
+                    tweets.append(json.dumps(status['retweeted_status']))
+                else:
+                    tweets.append(models.Tweet.create_from_json(status['retweeted_status']))
 
             if self.to_file:
-                tweets.append(json.dumps(status.retweeted_status))
+                if 'retweeted_status' in status:
+                    del status['retweeted_status']
+
+                tweets.append(json.dumps(status))
             else:
                 tweets.append(models.Tweet.create_from_json(status))
 
