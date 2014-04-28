@@ -111,6 +111,16 @@ $ python manage.py stream MyAPIKeys --poll-interval 30
  there may be repercussions. If you start receiving disconnect errors from Twitter,
  take a break for a few minutes before trying to reconnect.
 
+If you need to take your database offline for some reason or just want to stream
+tweets to a file instead, you can use the `--to-file` option:
+
+```bash
+$ python manage.py stream --to-file some_file.json
+```
+
+This will append tweets, in JSON format, one-per-line, to "some_file.json".
+If you are capturing retweets, they will be separated out onto separate lines.
+If you are not, they will be removed from the JSON objects before being printed.
 
 Settings
 --------

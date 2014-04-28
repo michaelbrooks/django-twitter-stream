@@ -189,7 +189,7 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
         if tweets:
             if self.to_file:
-                if not self._output_file:
+                if not self._output_file or self._output_file.closed:
                     self._output_file = open(self.to_file, 'ab')
                 self._output_file.write("\n".join(tweets) + "\n")
                 self._output_file.flush()
