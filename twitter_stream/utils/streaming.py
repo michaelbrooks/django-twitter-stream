@@ -174,11 +174,12 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
         tweets = []
         for status in batch:
             if settings.CAPTURE_EMBEDDED:
-                if status.retweeted_status:
+                if 'retweeted_status' in status:
                     if self.to_file:
-                        tweets.append(json.dumps(status.retweeted_status))
+                        tweets.append(json.dumps(status['retweeted_status']))
+                        del status['retweeted_status']
                     else:
-                        tweets.append(models.Tweet.create_from_json(status.retweeted_status))
+                        tweets.append(models.Tweet.create_from_json(status['retweeted_status']))
 
             if self.to_file:
                 tweets.append(json.dumps(status.retweeted_status))
@@ -190,10 +191,11 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
                 if not self._output_file:
                     self._output_file = open(self.to_file, 'ab')
                 self._output_file.write("\n".join(tweets) + "\n")
+                self._output_file.flush()
                 logger.info("Dumped %s tweets at %s tps to %s" % (len(tweets), len(tweets) / diff, self.to_file))
             else:
                 models.Tweet.objects.bulk_create(tweets)
-                logger.info("Imported %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
+                logger.info("Inserted %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
         else:
             logger.info("Saved 0 tweets")
 

@@ -85,6 +85,9 @@ class Command(BaseCommand):
             timeout_seconds=timeout_seconds
         )
 
+        if to_file:
+            logger.info("Saving tweets to %s", to_file)
+
         listener = utils.QueueStreamListener(to_file=to_file)
         checker = utils.FeelsTermChecker(queue_listener=listener,
                                          stream_process=stream_process)
