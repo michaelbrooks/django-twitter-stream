@@ -1,6 +1,7 @@
 import Queue
 import logging
 import time
+import json
 
 import twitter_monitor
 from twitter_stream import settings, models
@@ -121,7 +122,14 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
     Note that this is operated by the streaming thread.
     """
 
-    def __init__(self, api=None):
+    def __init__(self, api=None, to_file=None):
+        """
+        Listens for tweets from Tweepy and saves them in the database
+        when process_tweet_queue() is called (in a separate thread, probably).
+
+        If to_file is given, tweets are written to the file instead.
+        JSON formatted, one per line.
+        """
         super(QueueStreamListener, self).__init__(api)
 
         self.terminate = False
@@ -131,6 +139,10 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
         # For calculating tweets / sec
         self.time = time.time()
+
+        # Place for saving tweets if not in the database.
+        self.to_file = to_file
+        self._output_file = None
 
     def on_status(self, status):
         # construct a Tweet object from the raw status object.
@@ -163,11 +175,27 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
         for status in batch:
             if settings.CAPTURE_EMBEDDED:
                 if status.retweeted_status:
-                    tweets.append(models.Tweet.create_from_json(status.retweeted_status))
+                    if self.to_file:
+                        tweets.append(json.dumps(status.retweeted_status))
+                    else:
+                        tweets.append(models.Tweet.create_from_json(status.retweeted_status))
 
-            tweets.append(models.Tweet.create_from_json(status))
+            if self.to_file:
+                tweets.append(json.dumps(status.retweeted_status))
+            else:
+                tweets.append(models.Tweet.create_from_json(status))
 
-        models.Tweet.objects.bulk_create(tweets)
+        if tweets:
+            if self.to_file:
+                if not self._output_file:
+                    self._output_file = open(self.to_file, 'ab')
+                self._output_file.write("\n".join(tweets) + "\n")
+                logger.info("Dumped %s tweets at %s tps to %s" % (len(tweets), len(tweets) / diff, self.to_file))
+            else:
+                models.Tweet.objects.bulk_create(tweets)
+                logger.info("Imported %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
+        else:
+            logger.info("Saved 0 tweets")
 
         if settings.DEBUG:
             # Prevent apparent memory leaks
@@ -175,7 +203,6 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
             from django import db
             db.reset_queries()
 
-        logger.info("Inserted %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
         return len(tweets) / diff
 
     def set_terminate(self):

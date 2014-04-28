@@ -57,6 +57,13 @@ class Command(BaseCommand):
             default=False,
             help='Put the stream in a loop to prevent random termination. Use this if you are not running inside a process management system like supervisord.'
         ),
+        make_option(
+            '--to-file',
+            action='store',
+            dest='to_file',
+            default=None,
+            help='Write tweets to the given JSON file instead of the database.'
+        )
     )
     args = '<keys_name>'
     help = "Starts a streaming connection to Twitter"
@@ -66,6 +73,7 @@ class Command(BaseCommand):
         # The suggested time between hearbeats
         poll_interval = float(options.get('poll_interval', settings.POLL_INTERVAL))
         prevent_exit = options.get('prevent_exit', settings.PREVENT_EXIT)
+        to_file = options.get('to_file', None)
 
         # First expire any old stream process records that have failed
         # to report in for a while
@@ -77,7 +85,7 @@ class Command(BaseCommand):
             timeout_seconds=timeout_seconds
         )
 
-        listener = utils.QueueStreamListener()
+        listener = utils.QueueStreamListener(to_file=to_file)
         checker = utils.FeelsTermChecker(queue_listener=listener,
                                          stream_process=stream_process)
 
