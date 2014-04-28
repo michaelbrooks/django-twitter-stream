@@ -121,7 +121,7 @@ class FakeTwitterStream(object):
                 raw += line
 
     def next_tweet(self, infile):
-        return next(infile, default=None)
+        return next(infile, None)
 
     def run(self):
 
