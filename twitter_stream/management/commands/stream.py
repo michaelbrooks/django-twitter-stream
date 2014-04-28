@@ -6,6 +6,7 @@ import signal
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.management.base import BaseCommand
+import sys
 import tweepy
 import twitter_monitor
 from twitter_stream import models
@@ -63,6 +64,36 @@ class Command(BaseCommand):
             dest='to_file',
             default=None,
             help='Write tweets to the given JSON file instead of the database.'
+        ),
+        make_option(
+            '--from-file',
+            action='store',
+            dest='from_file',
+            default=None,
+            help='Read tweets from a given file, one JSON tweet per line.'
+        ),
+        make_option(
+            '--from-file-long',
+            action='store',
+            dest='from_file_long',
+            default=None,
+            help='Read tweets from a given file, where JSON tweets are pretty-printed.'
+        ),
+        make_option(
+            '--rate-limit',
+            action='store',
+            dest='rate_limit',
+            default=None,
+            type=float,
+            help='Rate to read in tweets, used ONLY if streaming from a file.'
+        ),
+        make_option(
+            '--limit',
+            action='store',
+            dest='limit',
+            default=None,
+            type=int,
+            help='Limit the number of tweets, used ONLY if streaming from a file.'
         )
     )
     args = '<keys_name>'
@@ -74,6 +105,14 @@ class Command(BaseCommand):
         poll_interval = float(options.get('poll_interval', settings.POLL_INTERVAL))
         prevent_exit = options.get('prevent_exit', settings.PREVENT_EXIT)
         to_file = options.get('to_file', None)
+        from_file = options.get('from_file', None)
+        from_file_long = options.get('from_file_long', None)
+        rate_limit = options.get('rate_limit', 50)
+        limit = options.get('limit', None)
+
+        if from_file and from_file_long:
+            logger.error("Cannot use both --from-file and --from-file-long")
+            exit(1)
 
         # First expire any old stream process records that have failed
         # to report in for a while
@@ -85,12 +124,14 @@ class Command(BaseCommand):
             timeout_seconds=timeout_seconds
         )
 
-        if to_file:
-            logger.info("Saving tweets to %s", to_file)
-
         listener = utils.QueueStreamListener(to_file=to_file)
-        checker = utils.FeelsTermChecker(queue_listener=listener,
-                                         stream_process=stream_process)
+
+        if from_file:
+            checker = utils.FakeTermChecker(queue_listener=listener,
+                                            stream_process=stream_process)
+        else:
+            checker = utils.FeelsTermChecker(queue_listener=listener,
+                                             stream_process=stream_process)
 
         def stop(signum, frame):
             """
@@ -113,29 +154,57 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, stop)
 
         keys = None
-        while not keys:
-            try:
-                keys = models.ApiKey.get_keys(keys_name)
-            except ObjectDoesNotExist:
-                if keys_name:
-                    logger.error("Keys for '%s' do not exist in the database. Waiting...", keys_name)
-                else:
-                    logger.warn("No keys in the database. Waiting...")
+        if not from_file:
+            # Only need keys if we are connecting to twitter
+            while not keys:
+                try:
+                    keys = models.ApiKey.get_keys(keys_name)
+                except ObjectDoesNotExist:
+                    if keys_name:
+                        logger.error("Keys for '%s' do not exist in the database. Waiting...", keys_name)
+                    else:
+                        logger.warn("No keys in the database. Waiting...")
 
-            time.sleep(5)
-            stream_process.heartbeat()
-
-        logger.info("Using keys for %s", keys.name)
+                time.sleep(5)
+                stream_process.heartbeat()
 
         try:
-            stream_process.keys = keys
-            stream_process.save()
+            if keys:
+                logger.info("Connecting to Twitter with keys for %s", keys.name)
+                stream_process.keys = keys
+                stream_process.save()
 
-            auth = tweepy.OAuthHandler(keys.api_key, keys.api_secret)
-            auth.set_access_token(keys.access_token, keys.access_token_secret)
+                # Only need auth if we have keys (i.e. connecting to twitter)
+                auth = tweepy.OAuthHandler(keys.api_key, keys.api_secret)
+                auth.set_access_token(keys.access_token, keys.access_token_secret)
 
-            # Start and maintain the streaming connection...
-            stream = twitter_monitor.DynamicTwitterStream(auth, listener, checker)
+                # Start and maintain the streaming connection...
+                stream = twitter_monitor.DynamicTwitterStream(auth, listener, checker)
+
+            elif from_file or from_file_long:
+
+                read_pretty = False
+                if from_file_long:
+                    from_file = from_file
+                    read_pretty = True
+
+                if from_file == '-':
+                    from_file = sys.stdin
+                    logger.info("Reading tweets from stdin")
+                else:
+                    if read_pretty:
+                        logger.info("Reading tweets from JSON file %s (pretty-printed)", from_file)
+                    else:
+                        logger.info("Reading tweets from JSON file %s", from_file)
+
+                stream = utils.FakeTwitterStream(from_file, pretty=read_pretty,
+                                                 listener=listener, term_checker=checker,
+                                                 limit=limit, rate_limit=rate_limit)
+            else:
+                raise Exception("No api keys and we're not streaming from a file.")
+
+            if to_file:
+                logger.info("Saving tweets to %s", to_file)
 
             if prevent_exit:
                 while checker.ok():

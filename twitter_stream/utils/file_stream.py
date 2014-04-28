@@ -61,161 +61,22 @@ class FakeTermChecker(twitter_monitor.TermChecker):
         self.error_count += 1
 
 # the chunk size for reading in the file
-BYTES_BETWEEN_PROGRESS = 40 * 1024 * 1024
+TWEETS_BETWEEN_PROGRESS = 7000
 
-
-class TweetProcessor(object):
-    """
-    Base class for a generic tweet processor.
-    Read raw json tweets from a file and run them through
-    the process() function.
-    """
-
-    def __init__(self, filename, limit=None, rate_limit=None):
-        self.args = ObjDict(
-            tweetsfile=filename,
-            limit=limit
-        )
-
-        self.tweet_read_time = 0
-        self.tweet_process_time = 0
-        self.tweet_parse_time = 0
-        self.start_time = 0
-        self.rate_limit = rate_limit
-
-
-    def arguments(self, parser):
-        """Add any needed arguments to the argparse parser"""
-        pass
-
-
-    def setup(self):
-        """
-        Perform any setup before processing begins.
-        self.args will contain the arguments from argparse.
-        """
-        pass
-
-
-    def process(self, tweet, raw_tweet):
-        """Process the tweet. raw_tweet is the unparsed json string"""
-        pass
-
-
-    def teardown(self):
-        """Perform any actions before the program ends."""
-        pass
-
-
-    def print_progress(self):
-        """If there are any progress indicators, print them here."""
-        pass
-
-
-    def _print_progress(self):
-        logger.info("--- Timing {0:0.3f}s (total) ---".format(time.time() - self.start_time))
-
-        logger.info("  Totals: {0:0.3f}s (read) {1:0.3f}s (parse) {2:0.3f}s (process)".format(
-            self.tweet_read_time, self.tweet_parse_time, self.tweet_process_time
-        ))
-
-        self.print_progress()
-
-    def run(self):
-
-        self.setup()
-
-        logger.info("Parsing %s..."%(self.args.tweetsfile))
-        if self.args.limit:
-            logger.info("up to %d tweets..." % self.args.limit)
-
-        with open(self.args.tweetsfile, "rt") as infile:
-            self.start_time = time.time()
-
-            # grab file size
-            infile.seek(0,os.SEEK_END)
-            filesize = infile.tell()
-            infile.seek(0,os.SEEK_SET)
-
-            # start our read loop with valid data
-            raw = ''
-            tweet_start_found = False
-            start = 0
-            tweet_count = 0
-            last_parse_position = 0
-
-            if self.rate_limit:
-                time_of_last_tweet = time.time()
-                time_between_tweets = 1.0 / self.rate_limit
-
-            for line in infile:
-
-                if line[0] == '{':
-                    # start of tweet
-                    tweet_start_found = True
-                    start = time.time()
-                    raw = ''
-                    raw += line
-                elif line[0:2] == '},' and tweet_start_found == True:
-                    # end of tweet
-                    raw += line[0]
-                    tweet_start_found = False
-                    self.tweet_read_time += time.time() - start
-
-                    start = time.time()
-                    tweet = json.loads(raw)
-                    self.tweet_parse_time += time.time() - start
-
-                    # make sure it is a tweet
-                    if 'user' in tweet:
-
-                        if self.rate_limit:
-                            while time.time() - time_of_last_tweet < time_between_tweets:
-                                time.sleep(time_between_tweets)
-
-                        start = time.time()
-
-                        if self.process(tweet, raw) is False:
-                            logger.warn("Stopping file stream")
-                            break
-
-                        self.tweet_process_time += time.time() - start
-                        tweet_count += 1
-
-                        if self.rate_limit:
-                            time_of_last_tweet = time.time()
-
-
-                elif tweet_start_found == True:
-                    # some line in the middle
-                    raw += line
-
-                cur_pos = infile.tell()
-                if (cur_pos - last_parse_position) > BYTES_BETWEEN_PROGRESS:
-                    last_parse_position = cur_pos
-                    pct_done = (float(cur_pos) * 100.0 / float(filesize))
-                    logger.info("====================")
-                    logger.info("%f%% complete..."%(pct_done))
-                    self._print_progress()
-
-                if self.args.limit and self.args.limit < tweet_count:
-                    break
-
-            self.teardown()
-            self._print_progress()
-
-        logger.info("Done processing %s..."%(self.args.tweetsfile))
-
-
-class FakeTwitterStream(TweetProcessor):
+class FakeTwitterStream(object):
     """
     A tweet processor with a similar interface to the
     DynamicTweetStream class. It launches the tweet file
     reading in a separate thread.
     """
     def __init__(self, tweets_file, listener, term_checker,
-                 limit=None, rate_limit=None):
-        super(FakeTwitterStream, self).__init__(tweets_file, limit=limit, rate_limit=rate_limit)
+                 limit=None, rate_limit=None, pretty=False):
+
+        self.tweets_file = tweets_file
+
+        self.limit = limit
+        self.rate_limit = rate_limit
+        self.pretty = pretty
 
         self.listener = listener
         self.term_checker = term_checker
@@ -230,6 +91,93 @@ class FakeTwitterStream(TweetProcessor):
     def process(self, tweet, raw_tweet):
         self.last_created_at = tweet['created_at']
         return self.listener.on_status(tweet)
+
+    def next_tweet_pretty(self, infile):
+        # start our read loop with valid data
+
+        raw = ''
+        tweet_start_found = False
+
+        while True:
+            try:
+                line = next(infile)
+            except StopIteration:
+                return None
+
+            if line[0] == '{':
+                # start of tweet
+                tweet_start_found = True
+                raw = ''
+                raw += line
+            elif line[0:2] == '},' and tweet_start_found == True:
+                # end of tweet
+                raw += line[0]
+                tweet_start_found = False
+
+                return raw
+
+            elif tweet_start_found == True:
+                # some line in the middle
+                raw += line
+
+    def next_tweet(self, infile):
+        return next(infile, default=None)
+
+    def run(self):
+
+        logger.info("Parsing %s..." % self.tweets_file)
+        if self.limit:
+            logger.info("up to %d tweets..." % self.limit)
+
+        if hasattr(self.tweets_file, 'read'):
+            infile = self.tweets_file
+        else:
+            infile = open(self.tweets_file, "rt")
+
+        tweet_count = 0
+        last_report_count = 0
+
+        if self.rate_limit:
+            time_of_last_tweet = time.time()
+            time_between_tweets = 1.0 / self.rate_limit
+
+        while True:
+            if self.pretty:
+                raw = self.next_tweet_pretty(infile)
+            else:
+                raw = self.next_tweet(infile)
+
+            if not raw:
+                break
+
+            tweet = json.loads(raw)
+
+            # make sure it is a tweet
+            if 'user' in tweet:
+
+                if self.rate_limit:
+                    while time.time() - time_of_last_tweet < time_between_tweets:
+                        time.sleep(time_between_tweets)
+
+                if self.process(tweet, raw) is False:
+                    logger.warn("Stopping file stream")
+                    break
+
+                tweet_count += 1
+
+                if self.rate_limit:
+                    time_of_last_tweet = time.time()
+
+            if tweet_count - last_report_count > TWEETS_BETWEEN_PROGRESS:
+                last_report_count = tweet_count
+
+                logger.info("Read in %d tweets", tweet_count)
+
+            if self.limit and self.limit < tweet_count:
+                logger.info("Limit of %d reached.", self.limit)
+                break
+
+        logger.info("Done reading file.")
 
     def start_polling(self, interval):
         """

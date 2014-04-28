@@ -122,6 +122,13 @@ This will append tweets, in JSON format, one-per-line, to "some_file.json".
 If you are capturing retweets, they will be separated out onto separate lines.
 If you are not, they will be removed from the JSON objects before being printed.
 
+You may also configure the stream to read from a file (or stdin with '-'):
+
+```bash
+$ python manage.py stream --from-file some_file.json
+$ python manage.py stream --from-file -
+```
+
 Settings
 --------
 
@@ -150,7 +157,7 @@ Streaming From a File
 
 There is also a `stream_from_file` command provided which can parse
 a file containing already collected tweets. This can be handy for debugging.
-This is an experimental feature.
+This feature is deprecated. The `stream` command now provides this functionality.
 
 
 Questions and Contributing
