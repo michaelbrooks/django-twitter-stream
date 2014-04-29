@@ -106,7 +106,7 @@ into your database, so don't set it too long. The default is 10 seconds.
 $ python manage.py stream MyAPIKeys --poll-interval 30
 ```
 
-*Warning*: Twitter does not allow an account to open more than one streaming
+> *Warning*: Twitter does not allow an account to open more than one streaming
  connection at a time. If you repeatedly try to open too many streaming connections,
  there may be repercussions. If you start receiving disconnect errors from Twitter,
  take a break for a few minutes before trying to reconnect.
@@ -190,6 +190,7 @@ you can use `swapper.get_model_name('twitter_stream', 'Tweet')`.
 If you are using South migrations and need to migrate from the old Tweet model
 to your new model, [this tutorial](http://www.caktusgroup.com/blog/2013/08/07/migrating-custom-user-model-django/)
 explains the issues. The basic idea is to do it in these steps:
+
 1. Create your new model and change your model loading throughout (i.e. use `load_model`),
    but don't set the `TWITTER_STREAM_TWEET_MODEL` to actually swap it out yet.
 2. Create a normal schema migration on `myapp` to make the database table for
