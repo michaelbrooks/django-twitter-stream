@@ -5,7 +5,7 @@ import json
 
 import twitter_monitor
 from twitter_stream import settings, models
-
+from swapper import load_model
 
 __all__ = ['FeelsTermChecker', 'QueueStreamListener']
 
@@ -171,13 +171,15 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
         if len(batch) == 0:
             return 0
 
+        Tweet = load_model("twitter_stream", "Tweet")
+
         tweets = []
         for status in batch:
             if settings.CAPTURE_EMBEDDED and 'retweeted_status' in status:
                 if self.to_file:
                     tweets.append(json.dumps(status['retweeted_status']))
                 else:
-                    tweets.append(models.Tweet.create_from_json(status['retweeted_status']))
+                    tweets.append(Tweet.create_from_json(status['retweeted_status']))
 
             if self.to_file:
                 if 'retweeted_status' in status:
@@ -185,7 +187,7 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
                 tweets.append(json.dumps(status))
             else:
-                tweets.append(models.Tweet.create_from_json(status))
+                tweets.append(Tweet.create_from_json(status))
 
         if tweets:
             if self.to_file:
@@ -195,7 +197,7 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
                 self._output_file.flush()
                 logger.info("Dumped %s tweets at %s tps to %s" % (len(tweets), len(tweets) / diff, self.to_file))
             else:
-                models.Tweet.objects.bulk_create(tweets)
+                Tweet.objects.bulk_create(tweets)
                 logger.info("Inserted %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
         else:
             logger.info("Saved 0 tweets")

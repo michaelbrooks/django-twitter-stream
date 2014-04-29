@@ -6,6 +6,7 @@ import os
 import socket
 import settings
 from django.core.exceptions import ObjectDoesNotExist
+from swapper import swappable_setting
 
 current_timezone = timezone.get_current_timezone()
 
@@ -135,7 +136,7 @@ class StreamProcess(models.Model):
             .update(status=StreamProcess.STREAM_STATUS_STOPPED)
 
 
-class Tweet(models.Model):
+class AbstractTweet(models.Model):
     """
     Selected fields from a Twitter Status object.
     Incorporates several fields from the associated User object.
@@ -147,6 +148,9 @@ class Tweet(models.Model):
     We just add them to the database as they come in, even if we've seen
     them before.
     """
+
+    class Meta:
+        abstract = True
 
     # Basic tweet info
     tweet_id = models.BigIntegerField()
@@ -221,7 +225,7 @@ class Tweet(models.Model):
             'retweet_count': raw.get('retweet_count'),
             'user_followers_count': user.get('followers_count'),
             'user_friends_count': user.get('friends_count'),
-        }
+            }
         for key in counts:
             if counts[key] is not None and counts[key] < 0:
                 counts[key] = None
@@ -286,6 +290,20 @@ class Tweet(models.Model):
         """
         result = cls.objects.aggregate(latest_created_at=models.Max('created_at'))
         return result['latest_created_at']
+
+
+class Tweet(AbstractTweet):
+    """
+    Load this class with swapper.load_model("twitter_stream", "Tweet")
+    in case it has been swapped out.
+    
+    To swap it out for your own class (extending AbstractTweet),
+    just add this to your settings:
+    TWITTER_STREAM_TWEET_MODEL = "myapp.MyTweetModel"
+    """
+
+    class Meta(AbstractTweet.Meta):
+        swappable = swappable_setting('twitter_stream', 'Tweet')
 
 
 class FilterTerm(models.Model):

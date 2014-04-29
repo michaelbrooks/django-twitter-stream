@@ -152,6 +152,58 @@ TWITTER_STREAM_SETTINGS = {
 }
 ```
 
+Custom Tweet Classes
+--------------------
+
+It is possible to swap the provided Tweet class for your own, so that you
+can add other fields or whatever.
+To do this, in the models.py file for your app (which we will call 'myapp' in this example),
+add a class that extends `AbstractTweet`:
+
+```python
+from twitter_stream.models import AbstractTweet
+class MyTweet(AbstractTweet):
+    """ add whatever here... """
+```
+
+Then, add this to your settings file:
+```python
+TWITTER_STREAM_TWEET_MODEL = 'myapp.MyTweet'
+```
+
+This is facilitated by the [django-swappable-models](https://github.com/wq/django-swappable-models) package.
+
+Anywhere you were previously hard-importing the Tweet model,
+you will need to replace it with something like this:
+
+```python
+from swapper import load_model
+Tweet = load_model('twitter_stream', 'Tweet')
+```
+
+This will load either the original Tweet model or the swapped model
+as appropriate. You can also load your `MyTweet` model directly, of course.
+
+For creating foreign keys pointing to Tweet (or the swapped model)
+you can use `swapper.get_model_name('twitter_stream', 'Tweet')`.
+
+If you are using South migrations and need to migrate from the old Tweet model
+to your new model, [this tutorial](http://www.caktusgroup.com/blog/2013/08/07/migrating-custom-user-model-django/)
+explains the issues. The basic idea is to do it in these steps:
+1. Create your new model and change your model loading throughout (i.e. use `load_model`),
+   but don't set the `TWITTER_STREAM_TWEET_MODEL` to actually swap it out yet.
+2. Create a normal schema migration on `myapp` to make the database table for
+   your new model. Run the migration.
+3. Write a data migration that copies data from the old `twitter_stream_tweets` table to your new table.
+   Run the data migration.
+4. Trick South into creating a migration for you that you can use to delete the old table with the `SOUTH_MIGRATION_MODULES` setting.
+   This step may need adaptation to work with `django-twitter-stream` since it was designed for the migration-less
+   `django.contrib.auth` app.
+5. Finally, swap the models with the `TWITTER_STREAM_TWEET_MODEL` setting.
+6. Generate new schema migrations for any apps with foreign keys that reference the Tweet model.
+7. Move your stub migration that deletes the twitter_stream_tweets table into your app's migration queue.
+8. Run all the remaining migrations.
+
 Streaming From a File
 ---------------------
 
