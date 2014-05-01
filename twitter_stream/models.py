@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connection
 from datetime import datetime, timedelta
 from email.utils import parsedate
 from django.utils import timezone
@@ -291,6 +291,21 @@ class AbstractTweet(models.Model):
         result = cls.objects.aggregate(latest_created_at=models.Max('created_at'))
         return result['latest_created_at']
 
+    @classmethod
+    def count_approx(cls):
+        """
+        Get the approximate number of tweets.
+        Executes quickly, even on large InnoDB tables.
+        """
+        query = "SHOW TABLE STATUS WHERE Name = %s"
+        cursor = connection.cursor()
+        cursor.execute(query, [cls._meta.db_table])
+
+        desc = cursor.description
+        row = cursor.fetchone()
+        row = dict(zip([col[0].lower() for col in desc], row))
+
+        return int(row['rows'])
 
 class Tweet(AbstractTweet):
     """
