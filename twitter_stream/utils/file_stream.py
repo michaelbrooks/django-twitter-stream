@@ -172,12 +172,16 @@ class FakeTwitterStream(object):
                 last_report_count = tweet_count
 
                 logger.info("Read in %d tweets", tweet_count)
+                if self.last_created_at:
+                    logger.info('Inserted tweets up to %s', str(self.last_created_at))
 
             if self.limit and self.limit < tweet_count:
                 logger.info("Limit of %d reached.", self.limit)
                 break
 
         logger.info("Read in %d tweets (total)", tweet_count)
+        if self.last_created_at:
+            logger.info('Tweets stopped at %s', str(self.last_created_at))
         logger.info("Done reading file.")
 
     def start_polling(self, interval):
@@ -196,9 +200,6 @@ class FakeTwitterStream(object):
 
             self.update_stream()
             self.handle_exceptions()
-
-            if self.last_created_at:
-                logger.info('Inserted tweets up to %s', str(self.last_created_at))
 
             # wait for the interval (compensate for the time taken in the loop
             elapsed = (time.time() - loop_start)
