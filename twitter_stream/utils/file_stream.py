@@ -147,8 +147,12 @@ class FakeTwitterStream(object):
             else:
                 raw = self.next_tweet(infile)
 
-            if not raw:
+            if raw is None:
                 break
+
+            raw = raw.strip()
+            if len(raw) == 0:
+                continue
 
             tweet = json.loads(raw)
 
