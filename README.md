@@ -152,6 +152,16 @@ TWITTER_STREAM_SETTINGS = {
 }
 ```
 
+Status Page
+-----------
+
+This app provides a status page that shows how the Twitter stream is doing.
+Just add something like this to your url conf:
+
+```python
+    url(r'^stream/', include('twitter_stream.urls', namespace="twitter_stream")),
+```
+
 Custom Tweet Classes
 --------------------
 
