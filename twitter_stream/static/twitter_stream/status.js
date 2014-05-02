@@ -71,8 +71,9 @@
             })]);
 
             var leftMargin = 22;
-            var barWidth = Math.floor((width - leftMargin) / data.length);
-            barWidth = Math.max(10, barWidth - (barWidth % 20));
+            var minutesShown = (now - dateRange[0]) / 60000;
+            var barWidth = Math.floor((width - leftMargin) / minutesShown);
+            barWidth = Math.max(1, barWidth - (barWidth % 20));
 
             x.range([barWidth / 2 + leftMargin, width]);
 
