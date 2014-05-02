@@ -39,7 +39,7 @@ def stream_status():
         avg_rate = float(tweet_count) / (latest_time - earliest_time).total_seconds()
 
     # Get the tweets / minute over the past 10 minutes
-    latest_time_minute = timez.replace(second=0, microsecond=0)
+    latest_time_minute = latest_time.replace(second=0, microsecond=0)
     tweet_counts = Tweet.objects.extra(select={
         'time': "created_at - INTERVAL SECOND(created_at) SECOND"
     }) \
