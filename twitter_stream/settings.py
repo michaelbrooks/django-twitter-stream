@@ -19,3 +19,6 @@ PREVENT_EXIT = _stream_settings.get('PREVENT_EXIT', False)
 
 # Record stats like memory usage in the database
 MONITOR_PERFORMANCE = _stream_settings.get('MONITOR_PERFORMANCE', True)
+
+# The number of tweets to insert into the database at once
+INSERT_BATCH_SIZE = _stream_settings.get('INSERT_BATCH_SIZE', 1000)

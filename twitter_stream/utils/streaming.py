@@ -197,7 +197,7 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
                 self._output_file.flush()
                 logger.info("Dumped %s tweets at %s tps to %s" % (len(tweets), len(tweets) / diff, self.to_file))
             else:
-                Tweet.objects.bulk_create(tweets)
+                Tweet.objects.bulk_create(tweets, settings.INSERT_BATCH_SIZE)
                 logger.info("Inserted %s tweets at %s tps" % (len(tweets), len(tweets) / diff))
         else:
             logger.info("Saved 0 tweets")
