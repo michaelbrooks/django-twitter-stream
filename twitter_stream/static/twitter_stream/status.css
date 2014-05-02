@@ -1,0 +1,60 @@
+svg {
+    font-size: 12px;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #888;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    fill: #888;
+}
+
+.x.axis path {
+    display: none;
+}
+
+.bars rect {
+    fill: steelblue;
+    stroke:none;
+    shape-rendering: crispEdges;
+}
+
+.bars text {
+    text-anchor: middle;
+    fill: #fff;
+}
+
+.bars .filling rect {
+    fill: #bcd5e8;
+}
+.bars .filling text {
+    fill: #333;
+}
+
+.content {
+    position: relative;
+}
+
+h4 {
+    margin-bottom: 0;
+    margin-top: 15px;
+}
+
+.status-label {
+    position: absolute;
+    top: 0;
+    left: 260px;
+    margin: 20px 0 10px 0;
+    color: #dd0000;
+}
+
+.status-label.running {
+    color: #009800;
+}
+
+.status-label span {
+    font-size: 36px;
+}
