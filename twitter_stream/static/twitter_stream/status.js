@@ -61,19 +61,16 @@
                 return d.time;
             });
 
-            var now = new Date();
-            now.setSeconds(0);
-            now.setMilliseconds(0);
-            x.domain([dateRange[0], Math.max(now, dateRange[1])]);
+            x.domain(dateRange);
 
             y.domain([0, d3.max(data, function (d) {
                 return d.tweets;
             })]);
 
             var leftMargin = 22;
-            var minutesShown = (now - dateRange[0]) / 60000;
+            var minutesShown = (dateRange[1] - dateRange[0]) / 60000;
             var barWidth = Math.floor((width - leftMargin) / minutesShown);
-            barWidth = Math.max(1, barWidth - (barWidth % 20));
+            barWidth = Math.max(2, barWidth - (barWidth % 20));
 
             x.range([barWidth / 2 + leftMargin, width]);
 
