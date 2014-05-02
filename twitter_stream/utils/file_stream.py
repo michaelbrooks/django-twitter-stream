@@ -177,6 +177,7 @@ class FakeTwitterStream(object):
                 logger.info("Limit of %d reached.", self.limit)
                 break
 
+        logger.info("Read in %d tweets (total)", tweet_count)
         logger.info("Done reading file.")
 
     def start_polling(self, interval):
