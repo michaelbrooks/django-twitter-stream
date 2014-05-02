@@ -137,7 +137,6 @@ class Command(BaseCommand):
             """
             Register stream's death and exit.
             """
-            logger.debug("Stopping because of signal")
 
             if stream_process:
                 stream_process.status = models.StreamProcess.STREAM_STATUS_STOPPED
@@ -145,6 +144,8 @@ class Command(BaseCommand):
 
             # Let the tweet listener know it should be quitting asap
             listener.set_terminate()
+
+            logger.error("Terminating")
 
             raise SystemExit()
 
@@ -166,6 +167,7 @@ class Command(BaseCommand):
                         logger.warn("No keys in the database. Waiting...")
 
                 time.sleep(5)
+                stream_process.status = models.StreamProcess.STREAM_STATUS_WAITING
                 stream_process.heartbeat()
 
         try:

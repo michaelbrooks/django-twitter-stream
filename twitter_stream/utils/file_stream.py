@@ -17,6 +17,7 @@ import logging
 import threading
 
 import twitter_monitor
+from twitter_stream import models
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class FakeTermChecker(twitter_monitor.TermChecker):
         # Update the process status in the database
         self.process.tweet_rate = self.listener.process_tweet_queue()
         self.process.error_count = self.error_count
+        self.process.status = models.StreamProcess.STREAM_STATUS_RUNNING
         self.process.heartbeat()
 
         return True

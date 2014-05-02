@@ -92,7 +92,6 @@ class StreamProcess(models.Model):
         return "%.1f MB" % (0.0009765625 * kb)
 
     def heartbeat(self, save=True):
-        self.status = StreamProcess.STREAM_STATUS_RUNNING
         self.last_heartbeat = timezone.now()
         self.expires_at = self.last_heartbeat + timedelta(seconds=self.timeout_seconds)
 
