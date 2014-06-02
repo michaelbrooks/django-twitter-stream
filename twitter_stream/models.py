@@ -35,7 +35,7 @@ class ApiKey(models.Model):
     access_token_secret = models.CharField(max_length=250)
 
     def __unicode__(self):
-        return self.name
+        return "%s/%s" % (self.user_name, self.app_name)
 
     @classmethod
     def get_keys(cls, keys_name):

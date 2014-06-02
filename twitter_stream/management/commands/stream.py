@@ -172,7 +172,7 @@ class Command(BaseCommand):
 
         try:
             if keys:
-                logger.info("Connecting to Twitter with keys for %s", keys.name)
+                logger.info("Connecting to Twitter with keys for %s/%s", keys.user_name, keys.app_name)
                 stream_process.keys = keys
                 stream_process.save()
 
