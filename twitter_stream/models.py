@@ -24,7 +24,8 @@ class ApiKey(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    name = models.CharField(max_length=250)
+    user_name = models.CharField(max_length=250)
+    app_name = models.CharField(max_length=250)
     email = models.EmailField(default=None, blank=True)
 
     api_key = models.CharField(max_length=250)
