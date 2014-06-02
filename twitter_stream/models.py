@@ -40,7 +40,7 @@ class ApiKey(models.Model):
     @classmethod
     def get_keys(cls, keys_name):
         if keys_name:
-            keys = ApiKey.objects.get(name=keys_name)
+            keys = ApiKey.objects.get(user_name=keys_name)
         else:
             keys = ApiKey.objects.first()
 
