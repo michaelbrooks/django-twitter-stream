@@ -12,7 +12,7 @@ class PositiveBigAutoField(models.AutoField):
 
     def db_type(self, connection):
         if 'mysql' in connection.__class__.__module__:
-            return 'bigint AUTO_INCREMENT'
+            return 'bigint AUTO_INCREMENT UNSIGNED'
 
         return super(PositiveBigAutoField, self).db_type(connection)
 
