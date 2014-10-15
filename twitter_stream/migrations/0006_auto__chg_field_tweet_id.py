@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'Tweet.id'
-        db.alter_column(u'twitter_stream_tweet', 'id', self.gf('django.db.models.fields.BigIntegerField')(primary_key=True))
+        db.alter_column(u'twitter_stream_tweet', 'id', self.gf('twitter_stream.fields.PositiveBigAutoField')(primary_key=True))
 
     def backwards(self, orm):
 
@@ -57,7 +57,7 @@ class Migration(SchemaMigration):
             'created_at': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
             'favorite_count': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'blank': 'True'}),
             'filter_level': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '6', 'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.BigIntegerField', [], {'primary_key': 'True'}),
+            'id': ('twitter_stream.fields.PositiveBigAutoField', [], {'primary_key': 'True'}),
             'in_reply_to_status_id': ('django.db.models.fields.BigIntegerField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
             'lang': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '9', 'null': 'True', 'blank': 'True'}),
             'latitude': ('django.db.models.fields.FloatField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),

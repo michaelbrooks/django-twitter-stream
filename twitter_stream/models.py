@@ -7,6 +7,7 @@ import socket
 import settings
 from django.core.exceptions import ObjectDoesNotExist
 from swapper import swappable_setting
+import fields
 
 current_timezone = timezone.get_current_timezone()
 
@@ -15,7 +16,6 @@ def parse_datetime(string):
         return datetime(*(parsedate(string)[:6]), tzinfo=current_timezone)
     else:
         return datetime(*(parsedate(string)[:6]))
-
 
 class ApiKey(models.Model):
     """
@@ -152,7 +152,7 @@ class AbstractTweet(models.Model):
     class Meta:
         abstract = True
 
-    id = models.BigIntegerField(primary_key=True)
+    id = fields.PositiveBigAutoField(primary_key=True)
 
     # Basic tweet info
     tweet_id = models.BigIntegerField()
