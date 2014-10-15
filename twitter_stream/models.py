@@ -152,6 +152,8 @@ class AbstractTweet(models.Model):
     class Meta:
         abstract = True
 
+    id = models.BigIntegerField(primary_key=True)
+
     # Basic tweet info
     tweet_id = models.BigIntegerField()
     text = models.CharField(max_length=250)
