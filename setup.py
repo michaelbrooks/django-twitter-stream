@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name='django-twitter-stream',
-    version='0.1.2',
+    version='0.1.3',
     packages=['twitter_stream'],
     url='http://github.com/michaelbrooks/django-twitter-stream',
     license='MIT',
