@@ -4,6 +4,23 @@ from django.core import exceptions
 import math
 from south.modelsinspector import add_introspection_rules
 
+class PositiveBigIntegerField(models.BigIntegerField):
+    description = "Positive Big integer"
+
+    def get_internal_type(self):
+        return "PositiveBigIntegerField"
+
+    def formfield(self, **kwargs):
+        defaults = {'min_value': 0,
+                    'max_value': models.BigIntegerField.MAX_BIGINT * 2 - 1}
+        defaults.update(kwargs)
+        return super(PositiveBigIntegerField, self).formfield(**defaults)
+
+    def db_type(self, connection):
+        if 'mysql' in connection.__class__.__module__:
+            return 'bigint UNSIGNED'
+        return super(PositiveBigIntegerField, self).db_type(connection)
+
 
 class PositiveBigAutoField(models.AutoField):
     description = "Unsigned Big Integer"
@@ -12,7 +29,7 @@ class PositiveBigAutoField(models.AutoField):
 
     def db_type(self, connection):
         if 'mysql' in connection.__class__.__module__:
-            return 'bigint AUTO_INCREMENT UNSIGNED'
+            return 'bigint UNSIGNED AUTO_INCREMENT'
 
         return super(PositiveBigAutoField, self).db_type(connection)
 
@@ -51,4 +68,22 @@ class PositiveBigAutoField(models.AutoField):
         defaults.update(kwargs)
         return super(PositiveBigAutoField, self).formfield(**defaults)
 
+
+class PositiveBigAutoForeignKey(models.ForeignKey):
+    """A special foriegn key field for positive big auto fields"""
+
+    def db_type(self, connection):
+        # The database column type of a ForeignKey is the column type
+        # of the field to which it points. An exception is if the ForeignKey
+        # points to an AutoField/PositiveIntegerField/PositiveSmallIntegerField,
+        # in which case the column type is simply that of an IntegerField.
+        # If the database needs similar types for key fields however, the only
+        # thing we can do is making AutoField an IntegerField.
+        rel_field = self.related_field
+        if isinstance(rel_field, PositiveBigAutoField):
+            return PositiveBigIntegerField().db_type(connection=connection)
+        return rel_field.db_type(connection=connection)
+
 add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigAutoField"])
+add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigIntegerField"])
+add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigAutoForeignKey"])
