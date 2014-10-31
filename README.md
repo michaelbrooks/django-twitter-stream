@@ -162,6 +162,16 @@ Just add something like this to your url conf:
     url(r'^stream/', include('twitter_stream.urls', namespace="twitter_stream")),
 ```
 
+For the twitter stream views to work, you'll need to add this to your `INSTALLED_APPS`:
+```python
+INSTALLED_APPS = (
+    # other apps
+    'django.contrib.humanize',
+    'bootstrap3',
+    'jsonview',
+)
+```
+
 Custom Tweet Classes
 --------------------
 
