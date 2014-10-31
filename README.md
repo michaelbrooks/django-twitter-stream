@@ -30,6 +30,23 @@ INSTALLED_APPS = (
 )
 ```
 
+> If you are using MySQL, you need to make sure that your database
+  is uses the `utf8mb4` character set for storing tweets, since MySQL's `utf8` 
+  character set does not include support for 4-byte characters.
+  Add the following to you database settings:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        # username, password, etc...
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+    }
+}
+```
+
 Run `python manage.py syncdb` to update your database.
 This project also supports migrations with [South](http://south.aeracode.org/).
 If you are using South in your project, you should run `python manage.py migrate`.
