@@ -2,7 +2,6 @@ from django.db import models
 from django import forms
 from django.core import exceptions
 import math
-from south.modelsinspector import add_introspection_rules
 
 class PositiveBigIntegerField(models.BigIntegerField):
     description = "Positive Big integer"
@@ -83,7 +82,11 @@ class PositiveBigAutoForeignKey(models.ForeignKey):
         if isinstance(rel_field, PositiveBigAutoField):
             return PositiveBigIntegerField().db_type(connection=connection)
         return rel_field.db_type(connection=connection)
-
-add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigAutoField"])
-add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigIntegerField"])
-add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigAutoForeignKey"])
+try:
+    # If we are using south, we need some rules to use these fields
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigAutoField"])
+    add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigIntegerField"])
+    add_introspection_rules([], ["^twitter_stream\.fields\.PositiveBigAutoForeignKey"])
+except ImportError:
+    pass
