@@ -6,9 +6,6 @@ import math
 class PositiveBigIntegerField(models.BigIntegerField):
     description = "Positive Big integer"
 
-    def get_internal_type(self):
-        return "PositiveBigIntegerField"
-
     def formfield(self, **kwargs):
         defaults = {'min_value': 0,
                     'max_value': models.BigIntegerField.MAX_BIGINT * 2 - 1}
