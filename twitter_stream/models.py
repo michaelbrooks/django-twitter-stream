@@ -157,14 +157,14 @@ class AbstractTweet(models.Model):
     # Basic tweet info
     tweet_id = models.BigIntegerField()
     text = models.CharField(max_length=250)
-    truncated = models.BooleanField()
+    truncated = models.BooleanField(default=False)
     lang = models.CharField(max_length=9, null=True, blank=True, default=None)
 
     # Basic user info
     user_id = models.BigIntegerField()
     user_screen_name = models.CharField(max_length=50)
     user_name = models.CharField(max_length=150)
-    user_verified = models.BooleanField()
+    user_verified = models.BooleanField(default=False)
 
     # Timing parameters
     created_at = models.DateTimeField(db_index=True)  # should be UTC
