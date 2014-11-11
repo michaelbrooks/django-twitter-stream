@@ -25,7 +25,7 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     install_requires=[
-        "django >= 1.6, < 1.7",
+        "django >= 1.6",
         "twitter-monitor >= 0.2.1, < 0.3",
         "swapper >= 0.1.1, < 0.2",
         "django-jsonview >= 0.2, < 0.5",
