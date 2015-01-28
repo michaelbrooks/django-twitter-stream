@@ -2,6 +2,7 @@ import Queue
 import logging
 import time
 import json
+import sys
 
 import twitter_monitor
 from twitter_stream import settings, models
@@ -179,7 +180,12 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
                 if self.to_file:
                     tweets.append(json.dumps(status['retweeted_status']))
                 else:
-                    tweets.append(Tweet.create_from_json(status['retweeted_status']))
+                    try:
+                        retweeted = Tweet.create_from_json(status['retweeted_status'])
+                        if retweeted is not None:
+                            tweets.append(retweeted)
+                    except:
+                        logger.error("Failed to parse retweeted %s" % status['retweeted_status']['id_str'], exc_info=True)
 
             if self.to_file:
                 if 'retweeted_status' in status:
@@ -187,7 +193,12 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
                 tweets.append(json.dumps(status))
             else:
-                tweets.append(Tweet.create_from_json(status))
+                try:
+                    tweet = Tweet.create_from_json(status)
+                    if tweet is not None:
+                        tweets.append(tweet)
+                except:
+                    logger.error("Failed to parse tweet %s" % status['id_str'], exc_info=True)
 
         if tweets:
             if self.to_file:
