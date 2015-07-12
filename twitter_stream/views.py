@@ -48,7 +48,7 @@ def stream_status():
         if settings.DATABASES['default']['ENGINE'].endswith('mysql'):
             drop_seconds = "created_at - INTERVAL SECOND(created_at) SECOND"
         elif settings.DATABASES['default']['ENGINE'].endswith('postgresql_psycopg2'):
-            drop_seconds = "date_trunc('minute', created_at + interval '30 second')"
+            drop_seconds = "date_trunc('minute', created_at)"
         else:
             drop_seconds = "created_at"
 
