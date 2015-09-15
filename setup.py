@@ -26,7 +26,7 @@ setup(
     ],
     install_requires=[
         "django >= 1.6",
-        "twitter-monitor >= 0.2.1, < 0.3",
+        "twitter-monitor >= 0.3.0, < 0.4",
         "swapper >= 0.1.1, < 0.2",
         "django-jsonview >= 0.2, < 0.5",
         "django-bootstrap3 >= 4.3.0"
