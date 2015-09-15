@@ -4,10 +4,10 @@ from email.utils import parsedate
 from django.utils import timezone
 import os
 import socket
-import settings
+from . import settings
 from django.core.exceptions import ObjectDoesNotExist
 from swapper import swappable_setting
-import fields
+from . import fields
 
 current_timezone = timezone.get_current_timezone()
 

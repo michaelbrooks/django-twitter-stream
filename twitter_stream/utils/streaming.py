@@ -1,4 +1,7 @@
-import Queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 import logging
 import time
 import json
@@ -13,7 +16,7 @@ __all__ = ['FeelsTermChecker', 'QueueStreamListener']
 logger = logging.getLogger(__name__)
 
 
-class TweetQueue(Queue.Queue):
+class TweetQueue(queue.Queue):
     """
     Simply extends the Queue class with get_all methods.
     """
@@ -33,7 +36,7 @@ class TweetQueue(Queue.Queue):
         try:
             if not block:
                 if not self._qsize():
-                    raise Queue.Empty
+                    raise queue.Empty
             elif timeout is None:
                 while not self._qsize():
                     self.not_empty.wait()
@@ -44,7 +47,7 @@ class TweetQueue(Queue.Queue):
                 while not self._qsize():
                     remaining = endtime - time.time()
                     if remaining <= 0.0:
-                        raise Queue.Empty
+                        raise queue.Empty
                     self.not_empty.wait(remaining)
             items = self._get_all()
             self.not_full.notify()
@@ -166,7 +169,7 @@ class QueueStreamListener(twitter_monitor.JsonStreamListener):
 
         try:
             batch = self.queue.get_all_nowait()
-        except Queue.Empty:
+        except queue.Empty:
             return 0
 
         if len(batch) == 0:
