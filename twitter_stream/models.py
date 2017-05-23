@@ -311,7 +311,7 @@ class AbstractTweet(models.Model):
 
             return int(row['rows'])
         else:
-            return len(cls.objects.all())
+            return cls.objects.count()
 
 class Tweet(AbstractTweet):
     """
