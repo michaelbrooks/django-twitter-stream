@@ -1,4 +1,5 @@
 from django.db import models, connection
+from django.conf import settings as django_settings
 from datetime import datetime, timedelta
 from email.utils import parsedate
 from django.utils import timezone
@@ -299,15 +300,18 @@ class AbstractTweet(models.Model):
         Get the approximate number of tweets.
         Executes quickly, even on large InnoDB tables.
         """
-        query = "SHOW TABLE STATUS WHERE Name = %s"
-        cursor = connection.cursor()
-        cursor.execute(query, [cls._meta.db_table])
+        if django_settings.DATABASES['default']['ENGINE'].endswith('mysql'):
+            query = "SHOW TABLE STATUS WHERE Name = %s"
+            cursor = connection.cursor()
+            cursor.execute(query, [cls._meta.db_table])
 
-        desc = cursor.description
-        row = cursor.fetchone()
-        row = dict(zip([col[0].lower() for col in desc], row))
+            desc = cursor.description
+            row = cursor.fetchone()
+            row = dict(zip([col[0].lower() for col in desc], row))
 
-        return int(row['rows'])
+            return int(row['rows'])
+        else:
+            return cls.objects.count()
 
 class Tweet(AbstractTweet):
     """

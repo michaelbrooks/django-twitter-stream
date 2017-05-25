@@ -1,5 +1,6 @@
 from datetime import timedelta
 import json
+from django.conf import settings
 from django.utils import timezone
 from django.template import RequestContext
 from django.template.loader import render_to_string
@@ -44,8 +45,15 @@ def stream_status():
     if latest_time is not None:
         latest_time_minute = latest_time.replace(second=0, microsecond=0)
 
+        if settings.DATABASES['default']['ENGINE'].endswith('mysql'):
+            drop_seconds = "created_at - INTERVAL SECOND(created_at) SECOND"
+        elif settings.DATABASES['default']['ENGINE'].endswith('postgresql_psycopg2'):
+            drop_seconds = "date_trunc('minute', created_at)"
+        else:
+            drop_seconds = "created_at"
+
         tweet_counts = Tweet.objects.extra(select={
-            'time': "created_at - INTERVAL SECOND(created_at) SECOND"
+            'time': drop_seconds
         }) \
             .filter(created_at__gt=latest_time_minute - timedelta(minutes=20)) \
             .values('time') \
